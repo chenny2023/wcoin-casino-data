@@ -17,6 +17,8 @@ const UA = { 'User-Agent': 'wcoin-open-data-export/1.0 (+https://github.com/chen
 // Evidence classification derived from the collector that sourced each wallet.
 // confidence_score is CLASS-based (documented in DATA_DICTIONARY.md) — we do not
 // invent per-wallet precision we don't have.
+const METHODOLOGY_URL = 'https://github.com/chenny2023/wcoin-casino-data/blob/main/methodology/README.md'
+const DUNE_QUERY_URL = 'https://dune.com/queries/7810326' // our public labels.addresses harvest query
 const EVIDENCE = {
   curated: { evidence_type: 'explorer_name_tag', evidence_source: 'Block-explorer public name tag (curated)', is_seed_wallet: true, cluster_method: null, confidence: 'high', confidence_score: 92 },
   dune: { evidence_type: 'public_label_set', evidence_source: 'Dune labels.addresses (institution)', is_seed_wallet: true, cluster_method: null, confidence: 'high', confidence_score: 88 },
@@ -24,6 +26,28 @@ const EVIDENCE = {
   'btc-cluster': { evidence_type: 'behavioral_cluster', evidence_source: 'Common-input-ownership expansion from a seed wallet', is_seed_wallet: false, cluster_method: 'common_input_ownership', confidence: 'medium', confidence_score: 62 },
 }
 const evidenceFor = (source) => EVIDENCE[source] ?? EVIDENCE[String(source).startsWith('arkham') ? 'arkham' : 'curated']
+
+// Per-entry curated evidence (data/curated-labels.json carries evidence_type per
+// entry — e.g. the Stake BTC cluster is behavioural, NOT a name-tag; honesty
+// requires the export to reflect the entry-level truth, not the collector default).
+const curatedByAddr = new Map()
+try {
+  const cur = JSON.parse(readFileSync('data/curated-labels.json', 'utf8'))
+  for (const e of cur.labels ?? []) if (e.address) curatedByAddr.set(e.address.toLowerCase(), e)
+} catch {}
+const CURATED_SCORE = { explorer_name_tag: 92, confirmed_deposit: 90, behavioral_cluster: 70 }
+
+// Where the ATTRIBUTION EVIDENCE itself lives (distinct from the address explorer
+// page). For explorer name-tags the tag is visible on the address page itself; for
+// Dune it's our public harvest query; for Arkham it's the entity view of the
+// address; behavioural attributions point at the published method (the evidence is
+// on-chain flow, reproducible from the method + anchoring txs in `source_note`).
+function evidenceSourceUrl(evType, source, chain, addr, explorerUrl) {
+  if (evType === 'explorer_name_tag') return explorerUrl
+  if (source === 'dune') return DUNE_QUERY_URL
+  if (String(source).startsWith('arkham')) return `https://intel.arkm.com/explorer/address/${addr}`
+  return METHODOLOGY_URL // behavioural: confirmed_deposit / cluster expansion
+}
 
 const EXPLORER = {
   ETH: (a) => `https://etherscan.io/address/${a}`,
@@ -59,7 +83,23 @@ for (const b of brands) {
   for (const m of b.members ?? []) {
     if (!m.address) continue
     const p = provByAddr.get(`${m.chain}:${m.address.toLowerCase()}`)
-    const ev = evidenceFor(p?.source ?? 'curated')
+    const ev = { ...evidenceFor(p?.source ?? 'curated') }
+    // entry-level curated evidence overrides the collector default (Stake BTC
+    // cluster entries are behavioural/confirmed-deposit, not name-tags)
+    const cu = curatedByAddr.get(m.address.toLowerCase())
+    let sourceNote = null
+    if (cu && (p?.source ?? 'curated') === 'curated') {
+      if (cu.evidence_type && cu.evidence_type !== ev.evidence_type) {
+        ev.evidence_type = cu.evidence_type
+        ev.cluster_method = cu.cluster_method ?? null
+        ev.is_seed_wallet = cu.evidence_type !== 'behavioral_cluster'
+        ev.confidence = cu.evidence_type === 'behavioral_cluster' ? 'medium' : 'high'
+        ev.confidence_score = CURATED_SCORE[cu.evidence_type] ?? ev.confidence_score
+        ev.evidence_source = `Curated (${cu.evidence_type.replace(/_/g, ' ')})`
+      }
+      sourceNote = cu.source ?? null
+    }
+    const explorerUrl = verifyUrl(m.chain, m.address)
     const row = {
       brand: b.brand,
       label: m.label,
@@ -68,7 +108,9 @@ for (const b of brands) {
       wallet_role: p?.wallet_role ?? null, // behaviour-inferred (hot_wallet/deposit_address/dormant); null = ambiguous, no claim (see DATA_DICTIONARY)
       role_inferred_at: p?.role_inferred_at ?? null,
       ...ev,
-      evidence_url: verifyUrl(m.chain, m.address),
+      address_explorer_url: explorerUrl,
+      evidence_source_url: evidenceSourceUrl(ev.evidence_type, p?.source ?? 'curated', m.chain, m.address, explorerUrl),
+      source_note: sourceNote, // curated entries: the human-readable evidence description incl. anchoring txs
       first_seen_at: p?.first_seen_at ?? null,
       as_of: asOf,
       volumeSuspect: !!b.volumeSuspect,

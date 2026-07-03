@@ -22,6 +22,8 @@ Raw on-chain throughput overstates casino activity. Verified volume excludes:
 - **Casino-to-casino double counts** — one player movement otherwise counted twice.
 - **Wash/treasury-pattern flow** — operators whose per-counterparty value or transfer pattern is wildly out of line with genuine player flow (many small transfers) are flagged `volumeSuspect`, shown as **"Under review"**, ranked by trust only, and excluded from all volume rankings.
 
+The exact thresholds are public (defaults; env-overridable server-side): scrutiny floor **$50M/7d**, average-transfer ceiling **$50K/tx** (`abnormal_avg_transfer_size`), per-counterparty ceiling **$50K** (`high_volume_per_counterparty`), plus a curated force-flag list (currently `Rain.gg`). Full parameter table: [DATA_DICTIONARY.md](../DATA_DICTIONARY.md#published-rule-parameters).
+
 Live version: <https://wcoin.casino/methodology/on-chain-volume>
 
 ## 3. Proof of reserves
