@@ -9,7 +9,7 @@ Field-level definitions for everything in `data/` and the public API. If a field
 | `brand` | Canonical operator brand after alias merging (e.g. `Stake.com`, `Stake 11`, per-chain hot wallets → **Stake**). Genuinely distinct products (e.g. Stake US) stay separate. |
 | `label` | The raw wallet-cluster label the brand was merged from (kept for traceability back to the source tag). |
 | `chain` / `address` | Network + address. Paste into the chain's explorer (or open `evidence_url`) to verify. |
-| `wallet_role` | Hot/cold/deposit classification. **Currently `null` for all rows** — we have not derived per-wallet roles yet and will not guess them. The field exists so the schema is stable when role inference ships. |
+| `wallet_role` | **Behaviour-inferred** from the wallet's own transfers over a rolling 14-day window (thresholds are conservative and published here): `hot_wallet` = two-way flow, ≥50 transfers, ≥20 distinct counterparties (an operating cashier); `deposit_address` = ≥5 external inflows whose outflows are ≥80% internal sweeps to the operator's own wallets; `dormant` = zero transfers in the window (inactivity is the only claim — NOT asserted to be cold storage); `null` = mixed/ambiguous, no claim made. `role_inferred_at` records when the classification last ran. |
 | `evidence_type` | How the wallet was attributed: `explorer_name_tag` (block-explorer public name tag), `public_label_set` (Dune `labels.addresses` institution labels), `entity_intelligence` (Arkham entity attribution), `behavioral_cluster` (common-input-ownership expansion). |
 | `evidence_source` | Human-readable source behind `evidence_type`. |
 | `evidence_url` | The explorer page where you can independently verify the address (and, for name-tag seeds, see the tag itself). |

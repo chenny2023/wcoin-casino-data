@@ -65,7 +65,8 @@ for (const b of brands) {
       label: m.label,
       chain: m.chain,
       address: m.address,
-      wallet_role: null, // hot/cold classification not yet derived — never guessed (see DATA_DICTIONARY)
+      wallet_role: p?.wallet_role ?? null, // behaviour-inferred (hot_wallet/deposit_address/dormant); null = ambiguous, no claim (see DATA_DICTIONARY)
+      role_inferred_at: p?.role_inferred_at ?? null,
       ...ev,
       evidence_url: verifyUrl(m.chain, m.address),
       first_seen_at: p?.first_seen_at ?? null,
