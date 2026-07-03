@@ -8,11 +8,22 @@ Open data & methodology behind **[wcoin.casino](https://wcoin.casino)** — an i
 
 | File | What it is |
 |---|---|
-| [`data/attributed-wallets.json`](data/attributed-wallets.json) | Snapshot of casino wallets we attribute to named operators (brand → chain → address). Exported from the live public API. Each address is independently verifiable on its chain's explorer. |
-| [`data/curated-labels.json`](data/curated-labels.json) | Hand-curated seed wallets. Every entry carries a **public block-explorer name-tag** (Etherscan/BscScan "public name tag") — nothing here is guessed; open the explorer URL and see the tag yourself. |
+| [`data/attributed-wallets.json`](data/attributed-wallets.json) | Casino wallets attributed to named operators, **separated into `seed_wallets` (direct public evidence) and `derived_wallets` (cluster-expanded)**. Every row carries `evidence_type`, `evidence_source`, `evidence_url`, class-based `confidence_score`, `first_seen_at`, and `volumeSuspect` + machine-readable `volumeSuspectReasons`. |
+| [`data/excluded-wallets.json`](data/excluded-wallets.json) | Known **non-casino infrastructure** (DEX routers/settlement contracts) explicitly denylisted from attribution — exclusions are auditable too. |
+| [`data/curated-labels.json`](data/curated-labels.json) | Hand-curated seed wallets. Every entry carries a **public block-explorer name-tag** — nothing here is guessed; open the explorer URL and see the tag yourself. |
 | [`data/casino-roster.json`](data/casino-roster.json) | The curated operator roster (brand metadata: chains, license, founded year, house edge where published). |
+| [`scripts/export.mjs`](scripts/export.mjs) | **The data pipeline itself.** Regenerates every data file from the site's public API and appends the CHANGELOG entry — reproducible by anyone, no private inputs. |
+| [`DATA_DICTIONARY.md`](DATA_DICTIONARY.md) | Field-level definitions for every field in the data files and API (verified volume vs raw, net flow, reserves & coverage, trust, confidence, evidence types…). |
+| [`CHANGELOG.md`](CHANGELOG.md) | Human-readable release notes per export: wallets added/removed, new brands, under-review changes. |
 | [`methodology/`](methodology/) | How each figure is produced — attribution, volume de-distortion, proof-of-reserves, trust scoring — and the known limits of each method. |
 | [`API.md`](API.md) | The free, public, read-only JSON API the site itself runs on. No key, no auth. |
+
+### Wallet categories
+
+1. **Seed wallets** — direct public evidence (explorer name tags, public label sets, entity intelligence).
+2. **Derived wallets** — expanded from seeds via common-input-ownership clustering; separated so you can weight them differently.
+3. **Unattributed casino-like wallets** — behave like casino cashiers but lack brand evidence; excluded from all verified figures and *never published under a brand* (counts at `/api/diag/coverage`).
+4. **Excluded infrastructure** — `data/excluded-wallets.json`.
 
 ## Data sources (attribution evidence classes)
 

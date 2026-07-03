@@ -16,10 +16,11 @@ Base URL: `https://wcoin.casino/api`
 | `GET /api/sentiment` | Blended third-party trust per operator (casino.guru / Trustpilot / AskGamblers / editorial) + complaint counts. |
 | `GET /api/marketSnapshot` | The daily report payload (also rendered at `/daily`). |
 | `GET /api/diag/coverage` | Attribution coverage diagnostics: wallets & named brands by source (curated / dune / btc-cluster). |
+| `GET /api/labels/export` | **Open-data provenance export**: every active casino wallet with its evidence source and first-seen date, plus the infra denylist. This is what `scripts/export.mjs` consumes. |
 
 ## Reading the flags
 
-- `volumeSuspect: true` → the operator's transfer pattern is anomalous (wash/treasury-churn-like). Its volume is shown as **"Under review"** on-site and must not be treated as player activity.
+- `volumeSuspect: true` → the operator's transfer pattern is anomalous (wash/treasury-churn-like). Its volume is shown as **"Under review"** on-site and must not be treated as player activity. The companion `volumeSuspectReasons` array says why: `abnormal_avg_transfer_size` · `high_volume_per_counterparty` · `manually_flagged_wash_or_treasury_pattern` (see DATA_DICTIONARY.md).
 - `attributed: false` → casino-pattern flow we could not tie to a named brand; excluded from verified figures.
 - Reserve `coverage` → how complete our wallet mapping is for that brand (a level, deliberately not a percentage).
 

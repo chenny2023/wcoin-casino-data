@@ -1,0 +1,14 @@
+{
+ "_about": "Known NON-casino infrastructure (DEX routers/settlement contracts etc.) explicitly excluded from casino attribution. Kept public so exclusions are auditable too.",
+ "as_of": "2026-07-03T02:30:14.213Z",
+ "excluded": [
+  {
+   "address": "0x000000000004444c5dc75cb358380d2e3de08a90",
+   "reason": "known_non_casino_infrastructure"
+  },
+  {
+   "address": "0x7f54f05635d15cde17a49502fedb9d1803a3be8a",
+   "reason": "known_non_casino_infrastructure"
+  }
+ ]
+}
